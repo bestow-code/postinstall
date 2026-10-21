@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-echo "hello world" > /var/root/install.log
+echo "hello world"
 echo $USER_NAME
-#sudo sysadminctl -screenLock off -password $USER_PASS
-#sudo sysadminctl -autologin set -userName $USER_NAME -password $USER_PASS
 
 #
 # defaults -currentHost write com.apple.screensaver idleTime 0 || true
