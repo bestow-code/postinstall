@@ -31,10 +31,6 @@ for d in "${UT}"/*.lproj; do
   chmod 644 "${d}/.skipbuddy"
 done
 
-sysadminctl -addUser $USER_NAME -password $USER_PASS -admin
-sysadminctl -autologin set -userName $USER_NAME -password $USER_PASS
-#sysadminctl -screenLock off -password $USER_PASS
-
 
 touch /var/db/.AppleSetupDone
 log "ok: touched /var/db/.AppleSetupDone"
@@ -48,6 +44,10 @@ for key in DidSeeCloudSetup DidSeePrivacy DidSeeAccessibility DidSeeAppearanceSe
 
 done
 
+
+sysadminctl -addUser $USER_NAME -password $USER_PASS -admin
+sysadminctl -autologin set -userName $USER_NAME -password $USER_PASS
+#sysadminctl -screenLock off -password $USER_PASS
 
 if [[ -f /System/Library/LaunchDaemons/ssh.plist ]]; then
   try "launchctl enable sshd" launchctl enable system/com.openssh.sshd
