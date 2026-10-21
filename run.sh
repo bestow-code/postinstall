@@ -86,7 +86,7 @@ else
   log "WARN: sudoers.d/${USER_NAME} failed visudo; removing"
   rm -f /etc/sudoers.d/${USER_NAME}
 fi
-USER_NAME=$USER_NAME USER_PASS=$USER_PASS sudo -u admin -g admin -E ./_configure.sh
+USER_NAME=$USER_NAME USER_PASS=$USER_PASS sudo -u admin -g admin -E ${TARGET_DIR}/_configure.sh
 
 #
 # defaults -currentHost write com.apple.screensaver idleTime 0 || true
