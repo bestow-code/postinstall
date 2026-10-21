@@ -33,7 +33,7 @@ done
 
 sysadminctl -addUser $USER_NAME -password $USER_PASS -admin
 sysadminctl -autologin set -userName $USER_NAME -password $USER_PASS
-sysadminctl -screenLock off -password $USER_PASS
+#sysadminctl -screenLock off -password $USER_PASS
 
 
 touch /var/db/.AppleSetupDone
@@ -54,20 +54,6 @@ if [[ -f /System/Library/LaunchDaemons/ssh.plist ]]; then
   try "launchctl bootstrap sshd" launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist
 #  try "launchctl load sshd" launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 fi
-
-try "ComputerName main" scutil --set ComputerName "main"
-try "LocalHostName main" scutil --set LocalHostName "main"
-try "HostName main" scutil --set HostName "main"
-log "hostname now: ComputerName=$(scutil --get ComputerName) LocalHostName=$(scutil --get LocalHostName) HostName=$(scutil --get HostName 2>&1 || echo unset)"
-
-systemsetup -settimezone America/Chicago
-
-
-try "pmset sleep 0" pmset -a sleep 0
-try "pmset displaysleep 0" pmset -a displaysleep 0
-try "pmset disksleep 0" pmset -a disksleep 0
-try "pmset autorestart 1" pmset -a autorestart 1
-try "pmset womp 1" pmset -a womp 1
 
 if perl -e '
   my $password = $ARGV[0];
@@ -100,6 +86,7 @@ else
   log "WARN: sudoers.d/${USER_NAME} failed visudo; removing"
   rm -f /etc/sudoers.d/${USER_NAME}
 fi
+USER_NAME=$USER_NAME USER_PASS=$USER_PASS sudo -u admin -g admin -E ./_configure.sh
 
 #
 # defaults -currentHost write com.apple.screensaver idleTime 0 || true
