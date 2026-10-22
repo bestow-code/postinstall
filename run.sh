@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
-echo "hello world"
-echo $USER_NAME
+set -euxo pipefail
+
+USER_NAME=${USER_NAME:-admin}
+USER_PASS=${USER_PASS:-admin}
 
 tmutil localsnapshot /
 
 
-log() { echo "[homelab-bootstrap $(date '+%Y-%m-%dT%H:%M:%S%z')] $*"; }
-try() {
-  local label="$1"; shift
-  set +e
-  "$@"
-  local rc=$?
-  set -e
-  if [[ $rc -ne 0 ]]; then
-    log "WARN: ${label} failed exit=${rc} cmd: $*"
-  else
-    log "ok: ${label}"
-  fi
-  return 0
-}
+#log() { echo "[homelab-bootstrap $(date '+%Y-%m-%dT%H:%M:%S%z')] $*"; }
+#try() {
+#  local label="$1"; shift
+#  set +e
+#  "$@"
+#  local rc=$?
+#  set -e
+#  if [[ $rc -ne 0 ]]; then
+#    log "WARN: ${label} failed exit=${rc} cmd: $*"
+#  else
+#    log "ok: ${label}"
+#  fi
+#  return 0
+#}
 
 
 UT="/Library/User Template"
@@ -33,8 +35,9 @@ done
 
 
 touch /var/db/.AppleSetupDone
-log "ok: touched /var/db/.AppleSetupDone"
-try "AppleDiagnosticsSetupDone" touch /var/db/.AppleDiagnosticsSetupDone
+#log "ok: touched /var/db/.AppleSetupDone"
+#try "AppleDiagnosticsSetupDone"
+touch /var/db/.AppleDiagnosticsSetupDone
 SA="/Library/Preferences/com.apple.SetupAssistant"
 for key in DidSeeCloudSetup DidSeePrivacy DidSeeAccessibility DidSeeAppearanceSetup \
            DidSeeScreenTime DidSeeSiriSetup DidSeeAvatarSetup DidSeeIntelligence \
@@ -45,48 +48,33 @@ for key in DidSeeCloudSetup DidSeePrivacy DidSeeAccessibility DidSeeAppearanceSe
 done
 
 
-sysadminctl -addUser $USER_NAME -password $USER_PASS -admin
-sysadminctl -autologin set -userName $USER_NAME -password $USER_PASS
-#sysadminctl -screenLock off -password $USER_PASS
+sysadminctl -addUser "$USER_NAME" -password "$USER_PASS" -admin
 
 if [[ -f /System/Library/LaunchDaemons/ssh.plist ]]; then
-  try "launchctl enable sshd" launchctl enable system/com.openssh.sshd
-  try "launchctl bootstrap sshd" launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist
-#  try "launchctl load sshd" launchctl load -w /System/Library/LaunchDaemons/ssh.plist
-fi
-
-if perl -e '
-  my $password = $ARGV[0];
-  my @magic = (125,137,82,171,133,68,207,190,109,134,212,232);
-  my @bytes = map { ord($_) } split //, $password;
-  push @bytes, 0;
-  my @out;
-  for my $i (0..$#bytes) { push @out, $bytes[$i] ^ $magic[$i % @magic]; }
-  while (@out % @magic != 0) { push @out, 0 ^ $magic[@out % @magic]; }
-  open my $fh, ">", "/etc/kcpassword" or die $!;
-  print $fh pack("C*", @out);
-  close $fh;
-' "${USER_PASS}"
-then
-  chmod 600 /etc/kcpassword
-  log "ok: kcpassword written"
-else
-  log "WARN: kcpassword encode failed; auto-login may not work"
+#  try "launchctl enable sshd"
+  launchctl enable system/com.openssh.sshd
+#  try "launchctl bootstrap sshd"
+  launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist
+#  try "launchctl load sshd"
+#  launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 fi
 
 
-cat > /etc/sudoers.d/${USER_NAME} <<SUDO
-# Homelab CI: passwordless sudo for local admin
+USER_SUDOERS_PATH=/etc/sudoers.d/"$USER_NAME"
+
+cat > "$USER_SUDOERS_PATH" <<SUDO
 ${USER_NAME} ALL=(ALL) NOPASSWD: ALL
 SUDO
-chmod 440 /etc/sudoers.d/${USER_NAME}
-if visudo -cf /etc/sudoers.d/${USER_NAME}; then
+
+chmod 440 "$USER_SUDOERS_PATH"
+if visudo -cf "$USER_SUDOERS_PATH"; then
   log "ok: passwordless sudo for ${USER_NAME}"
 else
   log "WARN: sudoers.d/${USER_NAME} failed visudo; removing"
-  rm -f /etc/sudoers.d/${USER_NAME}
+  rm -f "$USER_SUDOERS_PATH"
 fi
-USER_NAME=$USER_NAME USER_PASS=$USER_PASS sudo -u admin -g admin -E ${TARGET_DIR}/_configure.sh
+
+USER_NAME=$USER_NAME USER_PASS=$USER_PASS sudo -u admin -g admin -E "${TARGET_DIR}"/_configure.sh
 
 #
 # defaults -currentHost write com.apple.screensaver idleTime 0 || true
