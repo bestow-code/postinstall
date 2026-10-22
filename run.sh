@@ -4,7 +4,7 @@ set -euxo pipefail
 USER_NAME=${USER_NAME:-admin}
 USER_PASS=${USER_PASS:-admin}
 
-tmutil localsnapshot /
+#tmutil localsnapshot /
 
 
 #log() { echo "[homelab-bootstrap $(date '+%Y-%m-%dT%H:%M:%S%z')] $*"; }
