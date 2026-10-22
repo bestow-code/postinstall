@@ -23,7 +23,7 @@ sudo scutil --set ComputerName "main"
 sudo scutil --set LocalHostName "main"
 #try "HostName main"
 sudo scutil --set HostName "main"
-log "hostname now: ComputerName=$(scutil --get ComputerName) LocalHostName=$(scutil --get LocalHostName) HostName=$(scutil --get HostName 2>&1 || echo unset)"
+echo "hostname now: ComputerName=$(scutil --get ComputerName) LocalHostName=$(scutil --get LocalHostName) HostName=$(scutil --get HostName 2>&1 || echo unset)"
 
 sudo systemsetup -settimezone America/Chicago
 
@@ -57,9 +57,9 @@ if perl -e '
 ' "${USER_PASS}"
 then
   chmod 600 /etc/kcpassword
-  log "ok: kcpassword written"
+  echo "ok: kcpassword written"
 else
-  log "WARN: kcpassword encode failed; auto-login may not work"
+  echo "WARN: kcpassword encode failed; auto-login may not work"
 fi
 
 

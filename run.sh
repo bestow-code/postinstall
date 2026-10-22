@@ -43,7 +43,8 @@ for key in DidSeeCloudSetup DidSeePrivacy DidSeeAccessibility DidSeeAppearanceSe
            DidSeeScreenTime DidSeeSiriSetup DidSeeAvatarSetup DidSeeIntelligence \
            SkipCloudSetup SkipPrivacySetup SkipAppearanceSetup SkipScreenTime \
            SkipSiriSetup SkipTouchIDSetup SkipTrueToneEnable SkipAccessibility; do
-  try "SA ${key}" defaults write "${SA}" "${key}" -bool true
+#  try "SA ${key}"
+  defaults write "${SA}" "${key}" -bool true
 
 done
 
@@ -68,9 +69,9 @@ SUDO
 
 chmod 440 "$USER_SUDOERS_PATH"
 if visudo -cf "$USER_SUDOERS_PATH"; then
-  log "ok: passwordless sudo for ${USER_NAME}"
+  echo "ok: passwordless sudo for ${USER_NAME}"
 else
-  log "WARN: sudoers.d/${USER_NAME} failed visudo; removing"
+  echo "WARN: sudoers.d/${USER_NAME} failed visudo; removing"
   rm -f "$USER_SUDOERS_PATH"
 fi
 
