@@ -2,47 +2,25 @@
 
 set -euxo pipefail
 
-#log() { echo "[homelab-bootstrap $(date '+%Y-%m-%dT%H:%M:%S%z')] $*"; }
-#try() {
-#  local label="$1"; shift
-#  set +e
-#  "$@"
-#  local rc=$?
-#  set -e
-#  if [[ $rc -ne 0 ]]; then
-#    log "WARN: ${label} failed exit=${rc} cmd: $*"
-#  else
-#    log "ok: ${label}"
-#  fi
-#  return 0
-#}
-
-#try "ComputerName main"
-sudo scutil --set ComputerName "main"
-#try "LocalHostName main"
-sudo scutil --set LocalHostName "main"
-#try "HostName main"
-sudo scutil --set HostName "main"
-echo "hostname now: ComputerName=$(scutil --get ComputerName) LocalHostName=$(scutil --get LocalHostName) HostName=$(scutil --get HostName 2>&1 || echo unset)"
+USER_NAME=${USER_NAME:-admin}
+USER_PASS=${USER_PASS:-admin}
 
 sudo systemsetup -settimezone America/Chicago
 
+sudo scutil --set ComputerName "main"
+sudo scutil --set LocalHostName "main"
+sudo scutil --set HostName "main"
 
-#try "pmset displaysleep 0"
+
 sudo pmset -a displaysleep 0
-#try "pmset disksleep 0"
 sudo pmset -a disksleep 0
-#try "pmset sleep 0"
 sudo pmset -a sleep 0
-#try "pmset autorestart 1"
 sudo pmset -a autorestart 1
-#try "pmset womp 1"
 sudo pmset -a womp 1
 
 sudo sysadminctl -screenLock off -password admin
 
-sudo sysadminctl -autologin set -userName admin -password admin
-
+USER_PASS="admin"
 if perl -e '
   my $password = $ARGV[0];
   my @magic = (125,137,82,171,133,68,207,190,109,134,212,232);
@@ -62,6 +40,7 @@ else
   echo "WARN: kcpassword encode failed; auto-login may not work"
 fi
 
+sudo sysadminctl -autologin set -userName admin -password admin
 
 
 

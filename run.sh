@@ -4,24 +4,6 @@ set -euxo pipefail
 USER_NAME=${USER_NAME:-admin}
 USER_PASS=${USER_PASS:-admin}
 
-#tmutil localsnapshot /
-
-
-#log() { echo "[homelab-bootstrap $(date '+%Y-%m-%dT%H:%M:%S%z')] $*"; }
-#try() {
-#  local label="$1"; shift
-#  set +e
-#  "$@"
-#  local rc=$?
-#  set -e
-#  if [[ $rc -ne 0 ]]; then
-#    log "WARN: ${label} failed exit=${rc} cmd: $*"
-#  else
-#    log "ok: ${label}"
-#  fi
-#  return 0
-#}
-
 
 UT="/Library/User Template"
 mkdir -p "${UT}/Non_localized"
@@ -35,30 +17,61 @@ done
 
 
 touch /var/db/.AppleSetupDone
-#log "ok: touched /var/db/.AppleSetupDone"
-#try "AppleDiagnosticsSetupDone"
 touch /var/db/.AppleDiagnosticsSetupDone
 SA="/Library/Preferences/com.apple.SetupAssistant"
 for key in DidSeeCloudSetup DidSeePrivacy DidSeeAccessibility DidSeeAppearanceSetup \
            DidSeeScreenTime DidSeeSiriSetup DidSeeAvatarSetup DidSeeIntelligence \
            SkipCloudSetup SkipPrivacySetup SkipAppearanceSetup SkipScreenTime \
            SkipSiriSetup SkipTouchIDSetup SkipTrueToneEnable SkipAccessibility; do
-#  try "SA ${key}"
   defaults write "${SA}" "${key}" -bool true
-
 done
 
 
 sysadminctl -addUser "$USER_NAME" -password "$USER_PASS" -admin
 
 if [[ -f /System/Library/LaunchDaemons/ssh.plist ]]; then
-#  try "launchctl enable sshd"
   launchctl enable system/com.openssh.sshd
-#  try "launchctl bootstrap sshd"
   launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist
-#  try "launchctl load sshd"
 #  launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 fi
+
+
+systemsetup -settimezone America/Chicago
+
+scutil --set ComputerName "main"
+scutil --set LocalHostName "main"
+scutil --set HostName "main"
+
+
+pmset -a displaysleep 0
+pmset -a disksleep 0
+pmset -a sleep 0
+pmset -a autorestart 1
+pmset -a womp 1
+
+sysadminctl -screenLock off -password admin
+
+USER_PASS="admin"
+if perl -e '
+  my $password = $ARGV[0];
+  my @magic = (125,137,82,171,133,68,207,190,109,134,212,232);
+  my @bytes = map { ord($_) } split //, $password;
+  push @bytes, 0;
+  my @out;
+  for my $i (0..$#bytes) { push @out, $bytes[$i] ^ $magic[$i % @magic]; }
+  while (@out % @magic != 0) { push @out, 0 ^ $magic[@out % @magic]; }
+  open my $fh, ">", "/etc/kcpassword" or die $!;
+  print $fh pack("C*", @out);
+  close $fh;
+' "${USER_PASS}"
+then
+  chmod 600 /etc/kcpassword
+  echo "ok: kcpassword written"
+else
+  echo "WARN: kcpassword encode failed; auto-login may not work"
+fi
+
+sysadminctl -autologin set -userName admin -password admin
 
 
 USER_SUDOERS_PATH=/etc/sudoers.d/"$USER_NAME"
@@ -75,7 +88,6 @@ else
   rm -f "$USER_SUDOERS_PATH"
 fi
 
-USER_NAME=$USER_NAME USER_PASS=$USER_PASS sudo -u admin -g admin -E "${TARGET_DIR}"/_configure.sh
 
 #
 # defaults -currentHost write com.apple.screensaver idleTime 0 || true
